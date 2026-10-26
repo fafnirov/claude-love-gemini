@@ -404,8 +404,11 @@ cmd_review() {
   fi
 
   local prompt
-  prompt="You are an independent reviewer. Review the changes below against the actual code in the repository.
-Reply with JSON ONLY:
+  # This engine tends to wander off and explore the directory unless it is told
+  # not to, and it drops the output contract unless it is repeated after the diff.
+  prompt="You are an independent reviewer. Analyse ONLY the diff given at the end of this message.
+Do not list, open or explore files in the directory. Do not describe the repository.
+Reply with JSON ONLY, no prose before or after:
 {\"verdict\": \"ok|changes_requested\", \"findings\": [{\"severity\": \"high|medium|low\", \"kind\": \"bug|security|requirements|tests|regression\", \"file\": \"...\", \"detail\": \"...\", \"evidence\": \"...\"}], \"missing_tests\": [\"...\"], \"summary\": \"...\"}
 Back every critical finding with a concrete place in the code. Do not propose style changes."
   [ -n "$accept" ] && prompt="$prompt
@@ -415,7 +418,9 @@ Pay special attention to: $focus"
   prompt="$prompt
 
 DIFF:
-$(head -c 60000 "$d/diff.patch")"
+$(head -c 60000 "$d/diff.patch")
+
+END OF DIFF. Now reply with the JSON object described above and nothing else."
 
   set +e
   GEMINI_TASK_ACTIVE="review-$task_id" \

@@ -139,9 +139,26 @@ try:
     d = json.loads(raw)
     if isinstance(d, dict):
         text = d.get("response") or d.get("text") or d.get("output") or raw
+        # verified shape: stats.models.<model>.tokens.{input,candidates,total,cached}
         st = d.get("stats") or d.get("usage") or {}
         if isinstance(st, dict):
-            usage = {k: v for k, v in st.items() if isinstance(v, int)}
+            acc = {}
+            models = st.get("models")
+            if isinstance(models, dict):
+                for m in models.values():
+                    tok = (m or {}).get("tokens") or {}
+                    for src, dst in (("input", "input_tokens"),
+                                     ("prompt", "input_tokens"),
+                                     ("candidates", "output_tokens"),
+                                     ("total", "total_tokens"),
+                                     ("cached", "cached_input_tokens"),
+                                     ("thoughts", "reasoning_tokens")):
+                        v = tok.get(src)
+                        if isinstance(v, int) and v:
+                            acc[dst] = acc.get(dst, 0) + v
+            if not acc:
+                acc = {k: v for k, v in st.items() if isinstance(v, int)}
+            usage = acc or None
 except Exception:
     pass
 

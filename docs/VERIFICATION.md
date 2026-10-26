@@ -54,9 +54,55 @@ report rather than as a silent success.
 The test double now mirrors this exact help text, so capability detection is
 exercised against realistic input.
 
-## NOT verified against a live Gemini CLI
+## Live runs against a real Gemini CLI
 
-**This is the honest state of the project.** The driver is inherited from
+Authenticated with an AI Studio API key (the Google-account route is closed, see
+above). What actually happened, with exit codes:
+
+**Works**
+
+- Non-interactive `-p` with `-o json`: the answer arrives in `response`, and
+  `stats.models.<model>.tokens` carries real token counts. The wrapper now reads
+  that nested shape, so reports no longer say `token usage unavailable`.
+- Tool use in `plan` mode: a request that required listing the directory
+  returned the correct file list, exit 0.
+- **The failure path of the whole driver.** A real delegated task was executed:
+  the engine failed with `503`, and the gate did exactly what it should —
+  `engine_exit: 1`, status `failed`, no commit, `auto_merge_allowed: false`,
+  the error text captured in the report. The worktree, branch and logs were kept.
+
+**Blocked by quota and model availability**
+
+- A *successful* write task was never achieved. The default model
+  (`gemini-3.1-pro-preview-customtools`) returned `503 Service Unavailable` on
+  every tool-using write request, retrying for up to ten minutes.
+- `gemini-2.5-flash` answers `404`: *"no longer available to new users"*,
+  suggesting `gemini-3.8-flash`.
+- `gemini-3.8-flash` then answered `429`: *"You have exhausted your daily quota
+  on this model"* — after only a handful of requests.
+- Therefore unverified: whether `auto_edit` confines edits in practice, and the
+  container sandbox (`-s`) as a way to restrict reads.
+
+**Behavioural finding: the review contract is not honoured**
+
+Asked to return JSON only and to analyse nothing but the supplied diff, this
+build explored the working directory instead and replied with prose about the
+files it found — twice, including after the instruction was repeated before and
+after the diff. The wrapper degrades safely (`verdict: unparsed`, raw text
+preserved), but structured cross-review cannot be relied on from this engine
+today. Use it for execution; review with another engine.
+
+**What this means for the intended role**
+
+The free AI Studio tier does not support the "cheap bulk executor" idea as
+stated: bulk work is exactly what exhausts a daily quota, and the models that
+are not quota-limited are the ones returning 503 under tool-using load. Either
+pay for capacity, or treat this engine as an occasional helper rather than the
+workhorse.
+
+## Still not verified
+
+The driver is inherited from
 [Claude love Codex](https://github.com/fafnirov/claude-love-codex), where it was
 verified end to end against a real executor: parallel delegation, conflict
 refusal, cross-review in both directions, atomic merges, 168 automated checks.
@@ -71,10 +117,6 @@ the Antigravity suite of products"*. Antigravity ships no headless entry point
 (its only binary launches the Electron app), so it cannot serve as an executor.
 An API key from AI Studio is the remaining route.
 
-No task has yet been executed by the real engine: the CLI is installed but not
-authenticated (`GEMINI_API_KEY` is unset and no account is signed in), so every
-run ends at the auth check.
-
 Specifically unverified:
 
 - whether `--approval-mode auto_edit` really confines edits the way the name
@@ -88,8 +130,9 @@ Specifically unverified:
 - token accounting: the wrapper reports none, so every report carries
   `token usage unavailable`.
 
-Until a live run is recorded here, treat this repository as **functional but
-unproven against the real engine**.
+The driver and the wrapper are proven to handle a live engine, including its
+failures. What is not proven is a completed write task end to end — that waits
+on quota.
 
 ## Inherited guarantees
 
