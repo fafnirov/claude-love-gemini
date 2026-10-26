@@ -63,6 +63,14 @@ refusal, cross-review in both directions, atomic merges, 168 automated checks.
 What is new here — the engine wrapper — has **not** yet run against a real
 `gemini` binary.
 
+**Observed while trying to authenticate:** the "Sign in with Google" path of
+Gemini CLI 0.65.0 is closed for individual accounts. Google's own OAuth page
+reports success, then the CLI reports *"This client is no longer supported for
+Gemini Code Assist for individuals. To continue using Gemini, please migrate to
+the Antigravity suite of products"*. Antigravity ships no headless entry point
+(its only binary launches the Electron app), so it cannot serve as an executor.
+An API key from AI Studio is the remaining route.
+
 No task has yet been executed by the real engine: the CLI is installed but not
 authenticated (`GEMINI_API_KEY` is unset and no account is signed in), so every
 run ends at the auth check.

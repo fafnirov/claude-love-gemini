@@ -34,8 +34,16 @@ Claude Code — оркестратор. Gemini CLI — исполнитель н
 ## Требования
 
 - [Claude Code](https://docs.anthropic.com/claude-code)
-- [Gemini CLI](https://github.com/google-gemini/gemini-cli): `npm i -g @google/gemini-cli`,
-  затем вход в аккаунт (или `GEMINI_API_KEY`)
+- [Gemini CLI](https://github.com/google-gemini/gemini-cli): `npm i -g @google/gemini-cli`
+  с ключом `GEMINI_API_KEY`
+
+> **Вход через Google-аккаунт может не сработать.** На Gemini CLI 0.65.0 OAuth
+> проходит на стороне Google, а CLI его отклоняет: *«This client is no longer
+> supported for Gemini Code Assist for individuals… migrate to the Antigravity
+> suite of products»*. Antigravity — графическая среда без headless-режима, как
+> исполнитель она не годится. Используйте ключ из
+> [AI Studio](https://aistudio.google.com/) — там есть бесплатный уровень.
+
 - git, Python 3 (`python3` или `python`), bash и GNU `timeout`
   (coreutils; на macOS: `brew install coreutils`)
 

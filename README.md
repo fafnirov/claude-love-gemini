@@ -47,7 +47,15 @@ that needs it.
 
 - [Claude Code](https://docs.anthropic.com/claude-code)
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli): `npm i -g @google/gemini-cli`,
-  then sign in (or set `GEMINI_API_KEY`)
+  authenticated with `GEMINI_API_KEY`
+
+> **Signing in with a Google account may not work.** On Gemini CLI 0.65.0 the
+> OAuth flow completes at Google and the CLI then refuses it: *"This client is
+> no longer supported for Gemini Code Assist for individuals. To continue using
+> Gemini, please migrate to the Antigravity suite of products"*. Antigravity is
+> a GUI with no headless mode, so it cannot act as an executor. Use an API key
+> from [AI Studio](https://aistudio.google.com/) instead — it has a free tier.
+
 - git, Python 3 (`python3` or `python`), bash and GNU `timeout`
   (coreutils; on macOS: `brew install coreutils`)
 
