@@ -13,13 +13,16 @@ set -u
 for a in "$@"; do
   if [ "$a" = "--help" ]; then
     cat <<'HELP'
-Usage: gemini [options]
+Usage: gemini [options] [command]
 
 Options:
-  -p, --prompt            Run non-interactively with the given prompt
-  -m, --model             Model to use
-      --approval-mode     Approval mode: default | auto_edit | yolo
-  -y, --yolo              Auto-approve everything
+  -m, --model                 Model  [string]
+  -p, --prompt                Run in non-interactive (headless) mode with the given prompt.  [string]
+      --skip-trust            Trust the current workspace for this session.  [boolean]
+  -s, --sandbox               Run in sandbox?  [boolean]
+  -y, --yolo                  Automatically accept all actions  [boolean]
+      --approval-mode         Set the approval mode: default (prompt for approval), auto_edit (auto-approve edit tools), yolo (auto-approve all tools), plan (read-only mode)  [string] [choices: "default", "auto_edit", "yolo", "plan"]
+  -o, --output-format         The format of the CLI output.  [string] [choices: "text", "json", "stream-json"]
 HELP
     exit 0
   fi
@@ -90,7 +93,19 @@ case "$ACTION" in
     ;;
 esac
 
+JSON_OUT=0
+prev=""
+for a in "$@"; do
+  case "$prev" in -o|--output-format) [ "$a" = "json" ] && JSON_OUT=1 ;; esac
+  prev="$a"
+done
+
 if [ "$ANSWER" = "text" ]; then
-  echo "done (double)"
+  if [ "$JSON_OUT" -eq 1 ]; then
+    printf '{"session_id":"fake-1","response":"done (double)","stats":{"input_tokens":111,"output_tokens":22}}
+'
+  else
+    echo "done (double)"
+  fi
 fi
 exit "$EXITC"

@@ -4,8 +4,8 @@
 #
 #   gemini-run.sh [--read|--write] [--dir DIR] [--out FILE] [--json] "task"
 #
-#   --read   analysis only, the model must not edit files
-#   --write  edits inside DIR are auto-approved; shell commands still are not
+#   --read   --approval-mode plan: the CLI's own read-only mode
+#   --write  --approval-mode auto_edit: edits auto-approved, shell commands not
 #
 # stdout carries one JSONL event with the final message, so the driver's report
 # builder works the same for every engine. The final text also goes to --out.
@@ -80,10 +80,19 @@ fi
 
 if has "--approval-mode"; then
   case "$MODE" in
-    read)  PASS+=(--approval-mode default) ;;
+    read)  if has "plan"; then PASS+=(--approval-mode plan); else PASS+=(--approval-mode default); fi ;;
     write) PASS+=(--approval-mode auto_edit) ;;
     *) echo "gemini-run: mode must be read or write (got: $MODE)" >&2; exit 2 ;;
   esac
+  # Verified behaviour: in an untrusted folder the CLI silently downgrades the
+  # approval mode to "default", which would stall an unattended run. The task
+  # worktree is created by the driver from the user's own repository, so
+  # trusting it for this session is what makes the requested mode stick.
+  if has -- "--skip-trust"; then
+    PASS+=(--skip-trust)
+  else
+    echo "gemini-run: this build has no --skip-trust; the approval mode may be downgraded" >&2
+  fi
 else
   # Without approval control a write task would stall on the first prompt and a
   # read task would have no enforcement at all. Refuse rather than guess.
@@ -93,6 +102,10 @@ else
 fi
 
 [ -n "${GEMINI_MODEL:-}" ] && has "--model" && PASS+=(-m "$GEMINI_MODEL")
+# structured output when the build offers it: the final text is easier to
+# recover and errors stay machine-readable
+JSON_OUT=0
+if has -- "--output-format"; then PASS+=(-o json); JSON_OUT=1; fi
 
 PROMPT="${1:-}"
 if [ -z "$PROMPT" ] || [ "$PROMPT" = "-" ]; then
@@ -111,16 +124,34 @@ set +e
 RC=$?
 set -e
 
-[ -n "$OUT" ] && cp "$RAW" "$OUT"
 cat "$RAW.err" >&2
 
 # one JSONL event so the driver parses every engine the same way
-"$PY" - "$RAW" <<'PYEOF'
+"$PY" - "$RAW" "${OUT:-}" <<'PYEOF'
 import json, sys, pathlib
-text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace").strip()
-print(json.dumps({"type": "item.completed",
-                  "item": {"type": "agent_message", "text": text}},
-                 ensure_ascii=False))
+
+raw = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace").strip()
+out = sys.argv[2] if len(sys.argv) > 2 else ""
+text, usage = raw, None
+
+# -o json wraps the answer; fall back to the raw text for other builds
+try:
+    d = json.loads(raw)
+    if isinstance(d, dict):
+        text = d.get("response") or d.get("text") or d.get("output") or raw
+        st = d.get("stats") or d.get("usage") or {}
+        if isinstance(st, dict):
+            usage = {k: v for k, v in st.items() if isinstance(v, int)}
+except Exception:
+    pass
+
+if out:
+    pathlib.Path(out).write_text(text, encoding="utf-8")
+
+ev = {"type": "item.completed", "item": {"type": "agent_message", "text": text}}
+if usage:
+    ev["usage"] = usage
+print(json.dumps(ev, ensure_ascii=False))
 PYEOF
 
 rm -f "$RAW" "$RAW.err"
