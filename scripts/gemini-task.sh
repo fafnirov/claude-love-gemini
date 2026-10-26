@@ -31,7 +31,26 @@ set -euo pipefail
 export PYTHONIOENCODING=utf-8
 ROOT="${GEMINI_TASKS_DIR:-$HOME/.claude/gemini-tasks}"
 SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENGINE="${CLC_ENGINE:-auto}"
 RUNNER="$SCRIPTS/gemini-run.sh"
+
+# engine: agy (Antigravity CLI, signed-in account) or gemini (Gemini CLI, API key)
+resolve_engine() {
+  local la="${LOCALAPPDATA:-${USERPROFILE:-$HOME}/AppData/Local}"
+  command -v cygpath >/dev/null 2>&1 && la="$(cygpath -u "$la")"
+  if [ "$ENGINE" = "auto" ]; then
+    if command -v agy >/dev/null 2>&1 || [ -f "$la/agy/bin/agy.exe" ] || [ -f "$HOME/.local/bin/agy" ]; then
+      ENGINE="agy"
+    else
+      ENGINE="gemini"
+    fi
+  fi
+  case "$ENGINE" in
+    agy)    RUNNER="$SCRIPTS/agy-run.sh" ;;
+    gemini) RUNNER="$SCRIPTS/gemini-run.sh" ;;
+    *) die "unknown engine: $ENGINE (use agy or gemini)" ;;
+  esac
+}
 REPORTER="$SCRIPTS/task_report.py"
 HELPER="$SCRIPTS/task_meta.py"
 GEMINI_CONFIG="${GEMINI_HOME:-$HOME/.gemini}/settings.json"
@@ -111,6 +130,24 @@ acquire_slot() {
 
 cmd_doctor() {
   echo "--- gemini-task doctor"
+  resolve_engine
+  echo "engine:   $ENGINE  (override with --engine or CLC_ENGINE)"
+  if [ "$ENGINE" = "agy" ]; then
+    echo "runner:   $RUNNER"
+    local ab="${AGY_BIN:-}"
+    command -v agy >/dev/null 2>&1 && ab="$(command -v agy)"
+    local la2="${LOCALAPPDATA:-$HOME/AppData/Local}"
+    command -v cygpath >/dev/null 2>&1 && la2="$(cygpath -u "$la2")"
+    [ -z "$ab" ] && [ -f "$la2/agy/bin/agy.exe" ] && ab="$la2/agy/bin/agy.exe"
+    if [ -n "$ab" ]; then
+      echo "agy:      $ab (version $("$ab" --version 2>/dev/null | head -1))"
+      echo "auth:     signed-in Google account (no API key)"
+    else
+      echo "agy:      NOT FOUND"
+    fi
+    echo "logs:     $ROOT"
+    return 0
+  fi
   local bin="${GEMINI_BIN:-}"
   if [ -z "$bin" ] && command -v gemini >/dev/null 2>&1; then
     bin="$(command -v gemini)"
@@ -159,6 +196,7 @@ cmd_run() {
       --budget-seconds) budget="$2"; shift 2 ;;
       --max-parallel) max_parallel="$2"; shift 2 ;;
       --allow-dup) allow_dup=1; shift ;;
+      --engine) ENGINE="$2"; shift 2 ;;
       --model) model_opt="$2"; shift 2 ;;
       --timeout) timeout="$2"; shift 2 ;;
       --no-commit) commit=0; shift ;;
@@ -207,6 +245,7 @@ This task depends on: $c_deps (treat them as already done)"
   [ -n "$prompt" ] || die "no task text given"
   check_flags "$@"
 
+  resolve_engine
   [ -d "$repo" ] || die "directory does not exist: $repo"
   git -C "$repo" rev-parse --git-dir >/dev/null 2>&1 || die "$repo is not a git repository"
   [ -f "$RUNNER" ] || die "not found: $RUNNER"
@@ -292,7 +331,7 @@ This task depends on: $c_deps (treat them as already done)"
   local t0 t1 engine_exit=0
   t0=$(date +%s)
   set +e
-  GEMINI_TASK_ACTIVE="$task_id" GEMINI_MODEL="$model" \
+  GEMINI_TASK_ACTIVE="$task_id" GEMINI_MODEL="$model" AGY_MODEL="$model" \
     timeout -k 10 "$timeout" bash "$RUNNER" --write --dir "$wt" --out "$d/last.txt" --json \
       "$prompt" > "$d/events.jsonl" 2> "$d/stderr.log"
   engine_exit=$?
@@ -385,6 +424,7 @@ cmd_review() {
     esac
   done
 
+  resolve_engine
   local d target
   if [ -n "$task_id" ]; then
     d="$ROOT/$task_id"

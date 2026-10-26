@@ -1,5 +1,35 @@
 # Verification
 
+## Antigravity CLI engine — a full cycle, live
+
+The `agy` engine (Antigravity CLI 1.4.7, **signed-in Google account, no API
+key**) completed the whole cycle against a real repository:
+
+| Step | Result |
+|---|---|
+| delegated write task | `status: success`, 35 s |
+| files changed | `calc.py`, `test_calc.py` — exactly the declared scope |
+| tests in the worktree | passed |
+| token accounting | 57 939 in / 2 385 out / 60 324 total, reported per task |
+| main working copy during the task | untouched, HEAD unmoved |
+| merge | staged check, post-merge tests passed, ref fast-forwarded |
+| cleanup | worktree removed, logs kept |
+
+**Caught on the first attempt:** with `--mode accept-edits` the engine tried a
+shell command, which headless mode auto-denies — *"a tool required the command
+permission that headless mode cannot prompt for"* — and the turn ended with
+`engine_exit: 0` and **no changes at all**. The gate caught it as `no_changes`
+rather than reporting success. The wrapper now tells the engine to apply changes
+with its file-editing tools and leave verification to the driver. The
+`--dangerously-skip-permissions` escape hatch the CLI suggests stays refused.
+
+Verified flags of `agy` 1.4.7: `-p/--print/--prompt`, `--mode
+plan|accept-edits|auto`, `--output-format text|json|stream-json`, `--model`,
+`--effort`, `--sandbox`, `--add-dir`, `--json-schema`. Models offered include
+Gemini 3.8 Flash at three effort levels, Claude Sonnet 4.6, Claude Opus 4.6 and
+GPT-OSS 120B.
+
+
 What was actually run, and what was not.
 
 ## Automated suites — passing
