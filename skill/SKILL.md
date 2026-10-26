@@ -1,13 +1,20 @@
 ---
 name: claude-love-gemini
-description: Delegate bulk implementation work to the Gemini CLI from Claude Code, with git worktree isolation, a fact-based quality gate and atomic merges. Use for high-volume mechanical work - generating tests, large refactors, routine migrations, analysing a lot of source - where a cheap executor is preferable. Also use when the user says "use Gemini", "delegate this", or asks to run bulk tasks in parallel.
+description: Delegate bulk implementation work to Google's models from Claude Code - through the Antigravity CLI on a signed-in account, or the Gemini CLI on an API key - with git worktree isolation, a fact-based quality gate and atomic merges. Use for high-volume mechanical work - generating tests, large refactors, routine migrations, analysing a lot of source - where a cheap executor is preferable. Also use when the user says "use Gemini", "delegate this", or asks to run bulk tasks in parallel.
 ---
 
 # Claude love Gemini
 
-Claude Code is the orchestrator. The Gemini CLI is the executor. Every delegated
-task runs in its own git worktree and branch; the main working copy is never
-touched.
+Claude Code is the orchestrator. The executor is one of two engines:
+
+- **`agy` — Antigravity CLI**, the default. Runs on the signed-in Google account,
+  no API key, reports token usage per task.
+- **`gemini` — Gemini CLI**, the fallback. Needs `GEMINI_API_KEY`; the free tier
+  has a daily cap.
+
+The driver picks whichever is installed. Override with `--engine agy|gemini` or
+`CLC_ENGINE`. Every delegated task runs in its own git worktree and branch; the
+main working copy is never touched.
 
 Entry point: `~/.claude/scripts/gemini-task.sh` (override with `CLC_SCRIPTS`).
 
@@ -37,7 +44,11 @@ on overlapping files at the same time.
 - Never return raw logs or whole files to the conversation; report the compact
   result and keep the logs local.
 - Never add `--ack` or `--force` on your own to get past a refusal, and never
-  pass `-y` / `--yolo` / `--approval-mode=yolo` — they are refused anyway.
+  pass `-y` / `--yolo` / `--approval-mode=yolo` / `--dangerously-skip-permissions`
+  — they are refused anyway.
+- The Antigravity engine runs with edits approved but **shell commands denied**:
+  headless mode cannot prompt for them. Ask it to change files, not to run tests
+  or git — verification is the driver's job, via `--test`.
 
 ## Usage
 
@@ -80,8 +91,9 @@ The status is computed from facts — the exit code, the actual git diff, the te
 exit code, risk detection and scope — never from the executor's prose. Check the
 diff before telling the user the work is done.
 
-The Gemini CLI reports no token accounting, so every report carries the warning
-`token usage unavailable`. Do not invent numbers for it.
+The Antigravity engine reports real token counts per task. The Gemini CLI nests
+them under `stats.models`; when nothing is reported the warning
+`token usage unavailable` appears. Do not invent numbers for it.
 
 ## Safety
 

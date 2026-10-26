@@ -19,7 +19,7 @@ echo "  target: $SCRIPTS_DIR"
 echo
 
 mkdir -p "$SCRIPTS_DIR" "$SKILL_DIR"
-for f in gemini-run.sh gemini-task.sh task_report.py task_meta.py; do
+for f in agy-run.sh gemini-run.sh gemini-task.sh task_report.py task_meta.py; do
   cp "$HERE/scripts/$f" "$SCRIPTS_DIR/$f"
   chmod +x "$SCRIPTS_DIR/$f" 2>/dev/null || true
   echo "  installed: $SCRIPTS_DIR/$f"
@@ -47,7 +47,9 @@ fi
 
 echo
 echo "Next steps"
-echo "  1. Install the CLI if needed:  npm i -g @google/gemini-cli"
+echo "  1. Install an engine if needed:"
+echo "     Antigravity CLI (account, no API key):  https://antigravity.google/download"
+echo "     or Gemini CLI (API key):                npm i -g @google/gemini-cli"
 echo "  2. Check the environment:      $SCRIPTS_DIR/gemini-task.sh doctor"
 echo "  3. Run the self-check:         CLC_SCRIPTS=$SCRIPTS_DIR bash $SCRIPTS_DIR/tests/run-tests.sh"
 echo "  4. Add permissions to $CLAUDE_DIR/settings.json — see docs/PERMISSIONS.md."

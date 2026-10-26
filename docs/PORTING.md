@@ -13,6 +13,7 @@ by itself. This page keeps that cost manageable.
 | `scripts/task_report.py` | `scripts/codex_report.py` | same logic |
 | `scripts/task_meta.py` | `scripts/codex_meta.py` | same logic + Gemini-specific helpers |
 | `tests/*.sh` | `tests/*.sh` | same suites, renamed identifiers |
+| `scripts/agy-run.sh` | — | **engine-specific, no counterpart** |
 | `scripts/gemini-run.sh` | `scripts/codex-run.sh` | **engine-specific, do not port** |
 | `templates/GEMINI.md` | `templates/AGENTS.md` | engine-specific wording |
 

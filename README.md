@@ -1,6 +1,10 @@
 # Claude love Gemini
 
-Claude Code orchestrates. The Gemini CLI executes the bulk work. You write one
+**Two engines to Google's models: Antigravity CLI — the main one, driven by your
+signed-in Google account with no API key — and Gemini CLI as the fallback, driven
+by an API key.** The driver picks whichever is installed; `--engine` overrides.
+
+Claude Code orchestrates. The engine executes the bulk work. You write one
 task in plain words; Claude decides what to do itself, what to delegate, checks
 the real diff and tests, and hands back a single report.
 
