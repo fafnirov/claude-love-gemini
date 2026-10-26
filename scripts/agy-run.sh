@@ -96,7 +96,31 @@ else
   exit 3
 fi
 
-[ -n "${AGY_MODEL:-}" ] && has -- "--model" && PASS+=(--model "$AGY_MODEL")
+# --- Google models only -------------------------------------------------
+# The Antigravity CLI also offers Claude and GPT-OSS models. This project is
+# the Google side of the pair, so anything else is refused rather than silently
+# used. The Codex project is where another vendor's model belongs.
+AGY_ALLOW_MODEL_RE="${AGY_ALLOW_MODEL_RE:-^(gemini|gemma)}"
+if [ -n "${AGY_MODEL:-}" ]; then
+  if ! printf '%s' "$AGY_MODEL" | grep -Eq "$AGY_ALLOW_MODEL_RE"; then
+    echo "agy-run: model '$AGY_MODEL' is not a Google model — this project runs Gemini only." >&2
+    echo "         Available Google models: $("$BIN" models 2>/dev/null | grep -Eo '^(gemini|gemma)[^[:space:]]*' | tr '
+' ' ')" >&2
+    exit 2
+  fi
+  has -- "--model" && PASS+=(--model "$AGY_MODEL")
+elif has -- "--model"; then
+  # pin a Google model explicitly: the CLI default could change to another vendor
+  MCACHE="${TMPDIR:-/tmp}/agy-google-model"
+  if [ ! -s "$MCACHE" ]; then
+    # prefer a balanced effort level for bulk work, then whatever Google model exists
+    "$BIN" models 2>/dev/null | grep -Eo '^(gemini|gemma)[^[:space:]]*' > "$MCACHE.all" || true
+    { grep -m1 -- "-medium$" "$MCACHE.all"       || grep -m1 -- "-low$" "$MCACHE.all"       || head -1 "$MCACHE.all"; } > "$MCACHE" 2>/dev/null || true
+    rm -f "$MCACHE.all"
+  fi
+  PINNED="$(cat "$MCACHE" 2>/dev/null)"
+  [ -n "$PINNED" ] && PASS+=(--model "$PINNED")
+fi
 [ -n "${AGY_EFFORT:-}" ] && has -- "--effort" && PASS+=(--effort "$AGY_EFFORT")
 # structured output when the build offers it: the final text is easier to
 # recover and errors stay machine-readable

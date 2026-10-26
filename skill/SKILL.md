@@ -13,7 +13,11 @@ Claude Code is the orchestrator. The executor is one of two engines:
   has a daily cap.
 
 The driver picks whichever is installed. Override with `--engine agy|gemini` or
-`CLC_ENGINE`. Every delegated task runs in its own git worktree and branch; the
+`CLC_ENGINE`.
+
+**Google models only.** Antigravity also offers Claude and GPT-OSS models; this
+project refuses them, so do not pass one. If a task genuinely needs a different
+vendor, use the sister project rather than working around the check. Every delegated task runs in its own git worktree and branch; the
 main working copy is never touched.
 
 Entry point: `~/.claude/scripts/gemini-task.sh` (override with `CLC_SCRIPTS`).

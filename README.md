@@ -4,7 +4,14 @@
 signed-in Google account with no API key — and Gemini CLI as the fallback, driven
 by an API key.** The driver picks whichever is installed; `--engine` overrides.
 
-Claude Code orchestrates. The engine executes the bulk work. You write one
+Claude Code orchestrates. The engine executes the bulk work.
+
+**Google models only.** The Antigravity CLI can also reach Claude and GPT-OSS
+models; this project refuses them. A non-Google `--model` is rejected before the
+engine starts, and when nothing is pinned a Google model is chosen explicitly
+rather than trusting the CLI's default. Another vendor's model belongs in the
+sister project, [Claude love Codex](https://github.com/fafnirov/claude-love-codex).
+ You write one
 task in plain words; Claude decides what to do itself, what to delegate, checks
 the real diff and tests, and hands back a single report.
 
