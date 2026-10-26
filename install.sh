@@ -25,12 +25,12 @@ for f in agy-run.sh gemini-run.sh gemini-task.sh task_report.py task_meta.py; do
   echo "  installed: $SCRIPTS_DIR/$f"
 done
 
-mkdir -p "$SCRIPTS_DIR/tests"
+mkdir -p "$SCRIPTS_DIR/tests-gemini"
 for f in run-tests.sh run-lifecycle.sh run-merge-atomic.sh run-agy-engine.sh fake-gemini.sh fake-agy.sh; do
-  cp "$HERE/tests/$f" "$SCRIPTS_DIR/tests/$f"
-  chmod +x "$SCRIPTS_DIR/tests/$f" 2>/dev/null || true
+  cp "$HERE/tests/$f" "$SCRIPTS_DIR/tests-gemini/$f"
+  chmod +x "$SCRIPTS_DIR/tests-gemini/$f" 2>/dev/null || true
 done
-echo "  installed: $SCRIPTS_DIR/tests/ (self-check suites)"
+echo "  installed: $SCRIPTS_DIR/tests-gemini/ (self-check suites)"
 
 cp "$HERE/skill/SKILL.md" "$SKILL_DIR/SKILL.md"
 echo "  installed: $SKILL_DIR/SKILL.md"
@@ -51,7 +51,7 @@ echo "  1. Install an engine if needed:"
 echo "     Antigravity CLI (account, no API key):  https://antigravity.google/download"
 echo "     or Gemini CLI (API key):                npm i -g @google/gemini-cli"
 echo "  2. Check the environment:      $SCRIPTS_DIR/gemini-task.sh doctor"
-echo "  3. Run the self-check:         CLC_SCRIPTS=$SCRIPTS_DIR bash $SCRIPTS_DIR/tests/run-tests.sh"
+echo "  3. Run the self-check:         CLC_SCRIPTS=$SCRIPTS_DIR bash $SCRIPTS_DIR/tests-gemini/run-tests.sh"
 echo "  4. Add permissions to $CLAUDE_DIR/settings.json — see docs/PERMISSIONS.md."
 echo "     The installer does not touch settings.json on purpose."
 echo
