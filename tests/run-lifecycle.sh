@@ -151,7 +151,7 @@ echo
 echo "=== H. Statistics and token usage ==="
 OUT="$(bash "$T" stats 2>&1)"
 contains "stats: task count" "tasks" "$OUT"
-contains "stats: Gemini tokens" "gemini_tokens" "$OUT"
+contains "stats: engine tokens" "engine_tokens" "$OUT"
 contains "stats: cost disclaimer" "cost is not computed" "$OUT"
 
 echo

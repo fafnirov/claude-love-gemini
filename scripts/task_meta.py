@@ -319,8 +319,8 @@ def main():
         size_mb = round(sum(f.stat().st_size for f in root.rglob("*") if f.is_file()) / 1048576, 1)
         print(json.dumps({
             "tasks": tasks, "merges": merges, "by_status": by_status,
-            "gemini_seconds_total": dur,
-            "gemini_tokens": {"input_total": tin, "output_total": tout,
+            "engine_seconds_total": dur,
+            "engine_tokens": {"input_total": tin, "output_total": tout,
                              "note": "input includes cached tokens; cost is not computed"},
             "logs_size_mb": size_mb,
         }, ensure_ascii=False, indent=2))
