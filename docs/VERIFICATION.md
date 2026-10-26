@@ -23,6 +23,21 @@ rather than reporting success. The wrapper now tells the engine to apply changes
 with its file-editing tools and leave verification to the driver. The
 `--dangerously-skip-permissions` escape hatch the CLI suggests stays refused.
 
+### The environment this was measured in
+
+Two things about that live cycle, so the result is not read as more than it is:
+
+- Antigravity is **not available in every country**. On the machine used here the
+  account was refused by region until the eligibility check was bypassed locally.
+  Where the product is available normally, none of that applies; where it is not,
+  this engine depends on something outside the project and may stop working after
+  any update on Google's side. Treat the Gemini CLI engine as the fallback that
+  needs no such thing.
+- The automated suites — and CI — exercise the driver against a **test double**
+  with `CLC_ENGINE=gemini`. The `agy` path has no double yet: it was verified by
+  hand, in the single live cycle recorded above. A green badge says the driver is
+  sound, not that the Antigravity engine was re-tested on every commit.
+
 Verified flags of `agy` 1.4.7: `-p/--print/--prompt`, `--mode
 plan|accept-edits|auto`, `--output-format text|json|stream-json`, `--model`,
 `--effort`, `--sandbox`, `--add-dir`, `--json-schema`. Models offered include
