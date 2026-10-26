@@ -13,7 +13,14 @@ PY="$(command -v python3 2>/dev/null || command -v python 2>/dev/null || echo py
 T="$S/gemini-task.sh"
 BASEDIR="$(mktemp -d "${TMPDIR:-/tmp}/clc-atomic-XXXXXX")"
 export GEMINI_TASKS_DIR="$BASEDIR/tasks"
-export GEMINI_BIN="$HERE/fake-gemini.sh"
+# which engine this run exercises: gemini (API key) or agy (account)
+TEST_ENGINE="${CLC_TEST_ENGINE:-gemini}"
+export CLC_ENGINE="$TEST_ENGINE"
+if [ "$TEST_ENGINE" = "agy" ]; then
+  export AGY_BIN="$HERE/fake-agy.sh"
+else
+  export GEMINI_BIN="$HERE/fake-gemini.sh"
+fi
 
 PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  PASS  $1"; }
@@ -183,6 +190,6 @@ check "side branch untouched" "$MAIN6" "$(git -C "$R" rev-parse side)"
 contains "audit records the HEAD refusal" "rejected_head_moved" "$(tail -2 "$GEMINI_TASKS_DIR/index.jsonl")"
 
 echo
-echo "=== RESULT: PASS=$PASS FAIL=$FAIL ==="
+echo "=== RESULT [$TEST_ENGINE]: PASS=$PASS FAIL=$FAIL ==="
 rm -rf "$BASEDIR"
 [ "$FAIL" -eq 0 ]

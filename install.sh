@@ -26,7 +26,7 @@ for f in agy-run.sh gemini-run.sh gemini-task.sh task_report.py task_meta.py; do
 done
 
 mkdir -p "$SCRIPTS_DIR/tests"
-for f in run-tests.sh run-lifecycle.sh run-merge-atomic.sh fake-gemini.sh; do
+for f in run-tests.sh run-lifecycle.sh run-merge-atomic.sh run-agy-engine.sh fake-gemini.sh fake-agy.sh; do
   cp "$HERE/tests/$f" "$SCRIPTS_DIR/tests/$f"
   chmod +x "$SCRIPTS_DIR/tests/$f" 2>/dev/null || true
 done

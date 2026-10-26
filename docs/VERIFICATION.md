@@ -33,10 +33,10 @@ Two things about that live cycle, so the result is not read as more than it is:
   this engine depends on something outside the project and may stop working after
   any update on Google's side. Treat the Gemini CLI engine as the fallback that
   needs no such thing.
-- The automated suites — and CI — exercise the driver against a **test double**
-  with `CLC_ENGINE=gemini`. The `agy` path has no double yet: it was verified by
-  hand, in the single live cycle recorded above. A green badge says the driver is
-  sound, not that the Antigravity engine was re-tested on every commit.
+- Both engines now have a test double, and CI runs every suite twice — once per
+  engine — on three operating systems. What CI still cannot cover is the real
+  service: the live cycle recorded above was run by hand, once. A green badge
+  says the driver and both wrappers behave, not that Google's API answered.
 
 Verified flags of `agy` 1.4.7: `-p/--print/--prompt`, `--mode
 plan|accept-edits|auto`, `--output-format text|json|stream-json`, `--model`,
@@ -57,6 +57,10 @@ and are deterministic. They exercise the driver, not the model.
 | `tests/run-tests.sh` | risk detector on real git diffs, scope, executor self-commits, test states, CLI modes, limits, parallelism, merge gates, audit | 96 / 96 |
 | `tests/run-lifecycle.sh` | SIGINT, timeout, orphaned lock, orphaned worktree, corrupt report, restart, log rotation, stats | 25 / 25 |
 | `tests/run-merge-atomic.sh` | failing post-merge tests, ref targeting, compare-and-swap, branch moved past the gate, HEAD switched mid-check, control cases | 47 / 47 |
+| `tests/run-agy-engine.sh` | Google-only model policy, model pinning, bypass flags, the headless permission denial, token accounting | 12 / 12 |
+
+Each of the first three runs against both engines (`CLC_TEST_ENGINE=gemini|agy`),
+so a commit is checked 348 times before it lands.
 
 ```bash
 env -u PYTHONDONTWRITEBYTECODE bash tests/run-tests.sh

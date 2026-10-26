@@ -111,7 +111,7 @@ if [ -n "${AGY_MODEL:-}" ]; then
   has -- "--model" && PASS+=(--model "$AGY_MODEL")
 elif has -- "--model"; then
   # pin a Google model explicitly: the CLI default could change to another vendor
-  MCACHE="${TMPDIR:-/tmp}/agy-google-model"
+  MCACHE="${TMPDIR:-/tmp}/agy-google-model-$("$PY" -c "import hashlib,sys;print(hashlib.sha1(sys.argv[1].encode()).hexdigest()[:12])" "$BIN")"
   if [ ! -s "$MCACHE" ]; then
     # prefer a balanced effort level for bulk work, then whatever Google model exists
     "$BIN" models 2>/dev/null | grep -Eo '^(gemini|gemma)[^[:space:]]*' > "$MCACHE.all" || true

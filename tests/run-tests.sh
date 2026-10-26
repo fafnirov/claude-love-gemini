@@ -14,7 +14,16 @@ PY="$(command -v python3 2>/dev/null || command -v python 2>/dev/null || echo py
 T="$S/gemini-task.sh"
 BASEDIR="$(mktemp -d "${TMPDIR:-/tmp}/clc-core-XXXXXX")"
 export GEMINI_TASKS_DIR="$BASEDIR/tasks"
-export GEMINI_BIN="$HERE/fake-gemini.sh"
+# which engine this run exercises: gemini (API key) or agy (account)
+TEST_ENGINE="${CLC_TEST_ENGINE:-gemini}"
+export CLC_ENGINE="$TEST_ENGINE"
+if [ "$TEST_ENGINE" = "agy" ]; then
+  export AGY_BIN="$HERE/fake-agy.sh"
+  BIN_VAR=AGY_BIN
+else
+  export GEMINI_BIN="$HERE/fake-gemini.sh"
+  BIN_VAR=GEMINI_BIN
+fi
 
 PASS=0
 FAIL=0
@@ -168,7 +177,7 @@ OUT="$(bash "$T" run --repo "$BASEDIR/notgit" --no-require-tests "x" 2>&1)"
 contains "not a git repository" "not a git repository" "$OUT"
 
 mkrepo "$R"
-GEMINI_BIN=/nonexistent/gemini.exe FAKE_ACTION=ok bash "$T" run --repo "$R" --slug nobin \
+env "$BIN_VAR=/nonexistent/engine-binary" FAKE_ACTION=ok bash "$T" run --repo "$R" --slug nobin \
   --no-require-tests "missing binary" >"$BASEDIR/out.json" 2>"$BASEDIR/err.txt"
 D="$(last_task)"
 check "missing binary: status failed" "failed" "$(status_of "$D/report.json")"
@@ -306,6 +315,6 @@ contains "merge event recorded" "merge" "$(tail -5 "$GEMINI_TASKS_DIR/index.json
 contains "token usage recorded" "token_usage" "$(tail -20 "$GEMINI_TASKS_DIR/index.jsonl" | head -1)"
 
 echo
-echo "=== RESULT: PASS=$PASS FAIL=$FAIL ==="
+echo "=== RESULT [$TEST_ENGINE]: PASS=$PASS FAIL=$FAIL ==="
 rm -rf "$BASEDIR"
 [ "$FAIL" -eq 0 ]
