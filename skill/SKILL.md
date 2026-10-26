@@ -68,7 +68,13 @@ One compact JSON report: `status`, `changed_files`, `tests`, `risk_level`,
 
 Statuses: `success`, `needs_review`, `tests_failed`, `tests_not_run`,
 `no_changes`, `no_progress`, `failed`, `timeout`, `model_unavailable`,
-`blocked`, `budget_exhausted`, `duplicate`, `parallel_limit`.
+`quota_exhausted`, `engine_unavailable`, `blocked`, `budget_exhausted`,
+`duplicate`, `parallel_limit`.
+
+`quota_exhausted` and `engine_unavailable` mean **stop**, not retry: the first
+is a daily cap that no amount of waiting inside a session will clear, the second
+is the service shedding load. Report them to the user instead of burning the
+attempt budget.
 
 The status is computed from facts — the exit code, the actual git diff, the test
 exit code, risk detection and scope — never from the executor's prose. Check the

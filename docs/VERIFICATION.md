@@ -92,6 +92,20 @@ after the diff. The wrapper degrades safely (`verdict: unparsed`, raw text
 preserved), but structured cross-review cannot be relied on from this engine
 today. Use it for execution; review with another engine.
 
+**Model names, checked rather than guessed**
+
+| Model | Result |
+|---|---|
+| `gemini-3.1-pro-preview-customtools` | the CLI default here; answers in plan mode, `503` under tool-using write load |
+| `gemini-3-flash-preview` | seen in session stats |
+| `gemini-3.8-flash` | exists; answered `429` daily quota |
+| `gemini-2.5-flash` | `404` — "no longer available to new users" |
+| `gemini-1.5-flash` | `404` — "not found for API version v1beta" |
+
+Pinning an older "stable" name is therefore the wrong move: 1.5 and 2.5 are gone
+on this account. Nothing is pinned by default; use `--model` or `GEMINI_MODEL`
+when a specific one is wanted, and expect the names to keep moving.
+
 **What this means for the intended role**
 
 The free AI Studio tier does not support the "cheap bulk executor" idea as

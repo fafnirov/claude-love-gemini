@@ -60,7 +60,14 @@ RISK_DIFF = [
 ]
 
 MODEL_ERR = re.compile(
-    r"model_not_found|is not supported when using|model .{0,40}not (found|supported)", re.I)
+    r"model_not_found|is not supported when using|model .{0,40}not (found|supported)"
+    r"|is not found for API version|no longer available to new users", re.I)
+# verified live: a free tier answers 429 with this wording, and the preview
+# models answer 503 under tool-using load. They mean "stop", not "try harder".
+QUOTA_ERR = re.compile(r"exhausted your daily quota|RESOURCE_EXHAUSTED"
+                       r"|quota exceeded|code.{0,4}429|status.{0,4}429", re.I)
+BUSY_ERR = re.compile(r"code.{0,4}503|status.{0,4}503|Service Unavailable"
+                      r"|fetch failed sending request|overloaded", re.I)
 
 
 def read_text(p, limit=None):
@@ -199,13 +206,20 @@ def main():
     if not usage:
         warnings.append("token usage unavailable")
 
-    model_bad = bool(MODEL_ERR.search(stderr_tail)) or any(MODEL_ERR.search(e) for e in errors)
+    blob = stderr_tail + chr(10) + chr(10).join(errors)
+    model_bad = bool(MODEL_ERR.search(blob))
+    quota_hit = bool(QUOTA_ERR.search(blob))
+    engine_busy = bool(BUSY_ERR.search(blob))
 
     # Quality gate: the status comes from verifiable facts only.
     if meta.get("forced_status"):
         status = meta["forced_status"]
     elif model_bad:
         status = "model_unavailable"
+    elif quota_hit:
+        status = "quota_exhausted"
+    elif engine_busy:
+        status = "engine_unavailable"
     elif engine_exit == 124:
         status = "timeout"
     elif engine_exit != 0:
@@ -225,7 +239,8 @@ def main():
 
     if test_status == "failed" and not errors:
         errors = [x[:300] for x in tests_log.splitlines() if x.strip()][-MAX_ERRORS:]
-    if status in ("failed", "timeout", "model_unavailable") and not errors and stderr_tail:
+    if status in ("failed", "timeout", "model_unavailable", "quota_exhausted",
+                  "engine_unavailable") and not errors and stderr_tail:
         errors = [x[:300] for x in stderr_tail.splitlines() if x.strip()][-MAX_ERRORS:]
 
     tests_block = {
